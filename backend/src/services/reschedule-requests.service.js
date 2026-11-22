@@ -68,7 +68,11 @@ const createRescheduleRequest = async ({
 
     const slotResult = await client.query(
       `
-        SELECT id, is_booked
+        SELECT
+          id,
+          is_booked,
+          (slot_date + start_time) > (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')
+            AS is_future
         FROM available_slots
         WHERE id = $1
         FOR UPDATE
@@ -87,6 +91,13 @@ const createRescheduleRequest = async ({
       return rollbackAndReturn(
         client,
         serviceError(409, 'Available slot is already booked')
+      );
+    }
+
+    if (!slotResult.rows[0].is_future) {
+      return rollbackAndReturn(
+        client,
+        serviceError(409, 'Available slot must be in the future')
       );
     }
 
@@ -302,7 +313,9 @@ const processRescheduleRequest = async ({ id, status, availableSlotId }) => {
           is_booked,
           slot_date,
           start_time,
-          end_time
+          end_time,
+          (slot_date + start_time) > (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')
+            AS is_future
         FROM available_slots
         WHERE id = $1
         FOR UPDATE
@@ -323,6 +336,13 @@ const processRescheduleRequest = async ({ id, status, availableSlotId }) => {
       return rollbackAndReturn(
         client,
         serviceError(409, 'Available slot is already booked')
+      );
+    }
+
+    if (!slot.is_future) {
+      return rollbackAndReturn(
+        client,
+        serviceError(409, 'Available slot must be in the future')
       );
     }
 

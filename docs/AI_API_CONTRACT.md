@@ -42,7 +42,9 @@ response `GET /api/schedules/:id` dan `GET /api/available-slots`, jadi Backend b
 
 ## POST /api/v1/analyze
 
-Dipanggil Backend saat `POST /api/reschedule-requests` dibuat.
+Dipanggil Backend saat Admin menekan **Analisis & buat draft** pada
+`POST /api/reschedule-requests/:id/ai-review`. Backend meneruskan field `reason`
+yang tersimpan sebagai `message_text` dan `created_at` sebagai `message_timestamp`.
 
 Request:
 ```json
@@ -163,8 +165,7 @@ melanggar guardrail (`fallback_reason: "GUARDRAIL:UNKNOWN_TIME:14:00"`, dst.).
 {"error": {"code": "UNAUTHORIZED", "message": "Header X-API-Key tidak valid"}}
 ```
 
-## Hal yang masih perlu disepakati dengan tim Fullstack
+## Batas integrasi Web saat ini
 
-- Apakah `message_text`/`message_timestamp` masuk body `POST /api/reschedule-requests` (usulan: ya).
-- Approval mengacu ke `approved_date`+`approved_time` atau `slot_id` (AI Service menerima keduanya lewat `available_slots`).
-- Kolom penyimpanan hasil AI — usulan ada di `integration/backend/README.md`.
+- Customer mengirim pesan melalui field `reason`; hasil AI dibuat saat Admin meminta review dan tidak disimpan ke database.
+- Approval Web mengacu ke `available_slot_id`. Backend mengubahnya menjadi tanggal dan jam slot saat meminta draft final.
